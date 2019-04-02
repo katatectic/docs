@@ -12,9 +12,10 @@ class DocumentController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function indexAdmin()
     {
-        //
+        $documents = Document::get();
+        return view('admin.template', compact('documents'));
     }
 
     /**
@@ -46,7 +47,8 @@ class DocumentController extends Controller
      */
     public function show(Document $document)
     {
-        //
+        $document->files()->get()->count() > 0 ? $files = $document->files()->get() : $files = 0;        
+        return view('document', compact('document', 'files'));
     }
 
     /**
