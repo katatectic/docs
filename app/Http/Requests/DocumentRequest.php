@@ -23,9 +23,14 @@ class DocumentRequest extends FormRequest
      */
     public function rules()
     {
-        return [
+        $rules = [
             'name' => 'required|min:2|max:200',
-            //'file' => 'mimetypes:pdf'
         ];
+
+        if (!empty($this['files']))
+            if(count($this['files'])) foreach (range(0, count($this['files']) - 1) as $index) $rules['files.'.$index] = 'mimes:pdf';
+
+        return $rules;
+
     }
 }
