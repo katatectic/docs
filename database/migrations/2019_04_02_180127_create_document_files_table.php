@@ -16,7 +16,7 @@ class CreateDocumentFilesTable extends Migration
         Schema::create('document_files', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('document_id')->unsigned();
-            $table->foreign('document_id')->references('id')->on('documents');            
+            $table->foreign('document_id')->references('id')->on('documents')->onDelete('cascade');
             $table->string('path');
             $table->timestamps();
         });

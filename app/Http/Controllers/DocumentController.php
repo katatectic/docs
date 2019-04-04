@@ -3,10 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Document;
+use App\DocumentFile;
+use App\Http\Requests\DocumentRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class DocumentController extends Controller
 {
+    private $docs_pagination = 5;
+
+    /*
+     * Using of middlewares for defined actions     *
+     */
+    public function __construct()
+    {
+        $this->middleware('admin', ['only' => ['create', 'store', 'destroy']]);
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -14,7 +27,7 @@ class DocumentController extends Controller
      */
     public function indexAdmin()
     {
-        $documents = Document::get();
+        $documents = Document::paginate($this->docs_pagination);
         return view('admin.template', compact('documents'));
     }
 
@@ -25,7 +38,7 @@ class DocumentController extends Controller
      */
     public function create()
     {
-        //
+        return view('admin.create');
     }
 
     /**
@@ -34,9 +47,19 @@ class DocumentController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(DocumentRequest $request)
     {
-        //
+        try {
+            $data = $request->except('_token');
+            $document = Document::create($data);
+            if (isset($data['files'])) {
+                DocumentFile::filesUpload($data['files'], $document);
+            }
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Something gone wrong');
+        }
+
+        return redirect()->route('admin')->with('success', 'Document has been added successfully');
     }
 
     /**
@@ -45,9 +68,15 @@ class DocumentController extends Controller
      * @param  \App\Document  $document
      * @return \Illuminate\Http\Response
      */
+
+    public function getDocumentFiles(Document $document)
+    {
+        return $document->files()->get()->count() > 0 ? $files = $document->files()->get() : $files = 0;
+    }
+
     public function show(Document $document)
     {
-        $document->files()->get()->count() > 0 ? $files = $document->files()->get() : $files = 0;        
+        $files = $this->getDocumentFiles($document);
         return view('document', compact('document', 'files'));
     }
 
@@ -59,7 +88,8 @@ class DocumentController extends Controller
      */
     public function edit(Document $document)
     {
-        //
+        $files = $this->getDocumentFiles($document);
+        return view('admin.edit', compact('document', 'files'));
     }
 
     /**
@@ -69,9 +99,22 @@ class DocumentController extends Controller
      * @param  \App\Document  $document
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Document $document)
+    public function update(DocumentRequest $request, Document $document)
     {
-        //
+        try {
+            //dd($request->all());
+            $data = $request->except('_token', '_method', 'edit');
+
+            if (isset($data['files'])) {
+                DocumentFile::filesUpload($data['files'], $document);
+            }
+            $document->update($data);
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Something gone wrong');
+        }
+
+        return redirect()->back()->with('success', 'Document has been successfully updated');
     }
 
     /**
@@ -82,6 +125,37 @@ class DocumentController extends Controller
      */
     public function destroy(Document $document)
     {
-        //
+        try {
+            if($this->getDocumentFiles($document)) {
+                foreach ($this->getDocumentFiles($document) as $file) {
+                    $file->fileImageDelete($document);
+                }
+            }
+            $document->delete();
+
+        } catch (Exception $e) {
+
+            $error = Config::get('constants.ERROR_MESSAGE');
+            return redirect()->route('admin')->with('error', $error);
+
+        }
+        return redirect()->route('admin')->with('success', 'Document "' . $document->name . '"  has been deleted successfully');
+    }
+
+    public function destroyFile(Document $document, DocumentFile $file)
+    {
+        try {
+            //Storage::delete('documents/'.$document->id .'/' . $file->path);
+            $file->fileImageDelete($document);
+
+            $file->delete();
+
+        } catch (Exception $e) {
+
+            $error = Config::get('constants.ERROR_MESSAGE');
+            return redirect()->route('admin')->with('error', $error);
+
+        }
+        return redirect()->back()->with('success', 'File "' . $file->path . '"  has been deleted successfully');
     }
 }

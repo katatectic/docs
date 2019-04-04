@@ -11,7 +11,7 @@
                 <p>
                     @if($files)
                         @foreach($files as $file)
-                            <a class="btn btn-primary btn-lg" href="{{ url('/storage/app/public/files/' . $file->path) }}" role="button">{{$file->path}}</a>
+                            <a class="btn btn-primary btn-lg" href="{{ url('/storage/app/public/documents/' . $document->id . '/' . $file->path) }}" role="button" target="_blank">{{$file->path}}</a>
                         @endforeach
                     @else
                         <p>This document does not have files</p>
