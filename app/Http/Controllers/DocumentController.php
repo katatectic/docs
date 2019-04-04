@@ -17,7 +17,7 @@ class DocumentController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('admin', ['only' => ['create', 'store', 'destroy']]);
+        $this->middleware('admin', ['only' => ['create', 'store', 'destroy', 'edit', 'update', 'destroyFile']]);
     }
 
     /**
