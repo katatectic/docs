@@ -13,6 +13,7 @@
         <input type="file" name="files[]" class="form-control-file" id="files" multiple>
     </div>
 
+    <a href="{{route('admin')}}" class="btn btn-warning" role="button" aria-pressed="true">Cancel</a>
     <button type="submit" class="btn btn-primary">Submit</button>
 
 </form>
